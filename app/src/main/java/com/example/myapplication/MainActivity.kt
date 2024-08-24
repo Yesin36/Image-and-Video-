@@ -1,7 +1,9 @@
 package com.example.myapplication
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -10,6 +12,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.myapplication.databinding.ActivityMainBinding
 import com.google.firebase.Firebase
+import com.google.firebase.database.database
 import com.google.firebase.storage.storage
 import com.squareup.picasso.Picasso
 
@@ -40,10 +43,11 @@ class MainActivity : AppCompatActivity() {
     val imageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
             if (it.data != null) {
-               val ref = Firebase.storage.reference.child("image")
+               val ref = Firebase.storage.reference.child("Image/"+System.currentTimeMillis()+"."+getFileType(it.data!!.data!!))
                 ref.putFile(it.data!!.data!!)
                     .addOnSuccessListener {
                         ref.downloadUrl.addOnSuccessListener {
+                            Firebase.database.reference.child("Image").push().setValue(it.toString())
 //                            binding.imageView.setImageURI(it)    // if i want to show image in imageview we can use this code
                             Toast.makeText(this, "Image Uploaded", Toast.LENGTH_SHORT).show()
                             Picasso.get().load(it.toString()).into(binding.imageView); // if i want to show image in imageview we can use this code 2code is work
@@ -53,5 +57,13 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
+    }
+
+    // for unique path of image
+    private fun getFileType(data: Uri): String? {
+        val mimeType =MimeTypeMap.getSingleton()
+        return mimeType.getExtensionFromMimeType(contentResolver.getType(data))
+
+
     }
 }
