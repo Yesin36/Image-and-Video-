@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "874958302081",
+    "project_id": "image-and-video-aaa91",
+    "storage_bucket": "image-and-video-aaa91.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874958302081:android:5b08a4214c2e80b6811680",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNJ-ZSp5_YP8vyFoHx29cis-URT-LvHTg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
