@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.app.ProgressDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -20,9 +21,12 @@ import com.google.firebase.Firebase
 import com.google.firebase.database.database
 import com.google.firebase.storage.storage
 import com.squareup.picasso.Picasso
+import com.google.firebase.storage.OnProgressListener
+
 
 class VideoActivity : AppCompatActivity() {
     private lateinit var binding: ActivityVideoBinding
+    private lateinit var progressDialog: ProgressDialog
     override fun onCreate(savedInstanceState: Bundle?) {
         binding = ActivityVideoBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
@@ -33,6 +37,8 @@ class VideoActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        progressDialog = ProgressDialog(this)
+
 
         binding.videoView.isVisible = false
         binding.select.setOnClickListener {
@@ -50,6 +56,9 @@ class VideoActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == RESULT_OK) {
                 if (it.data != null) {
+                    /// progress bar
+                    progressDialog.setTitle("Uploading Video")
+                    progressDialog.show()
 
                     val ref = Firebase.storage.reference.child(
                         "Video/" + System.currentTimeMillis() + "." + getFileType(it.data!!.data!!)
@@ -59,6 +68,7 @@ class VideoActivity : AppCompatActivity() {
                             ref.downloadUrl.addOnSuccessListener {
                                 Firebase.database.reference.child("Video").push()
                                     .setValue(it.toString())
+                                progressDialog.dismiss()  // dismiss the progess bar
 //                            binding.imageView.setImageURI(it)    // if i want to show image in imageview we can use this code
                                 Toast.makeText(this, "Video Uploaded", Toast.LENGTH_SHORT).show()
                                 binding.select.isVisible = false
@@ -70,12 +80,32 @@ class VideoActivity : AppCompatActivity() {
                                 binding.videoView.setVideoURI(it)
                                 binding.videoView.setMediaController(mc)
                                 binding.videoView.start()
+                                // if video finish video delete
+                                binding.videoView.setOnCompletionListener {
+                                    ref.delete().addOnSuccessListener {
+                                        Toast.makeText(this, "Video Deleted", Toast.LENGTH_SHORT)
+                                            .show()
+                                        binding.select.isVisible = true
+                                        binding.videoView.isVisible = false
+                                    }
+
+                                }
 
                             }
+
                         }
+
+                        /// see how much video is uploaded
+                        .addOnProgressListener{
+                                val value = (it.bytesTransferred / it.totalByteCount) * 100
+                                progressDialog.setMessage("Uploaded"+ value.toString() + "%")
+
+                            }
+
 
 
                 }
+
 
             }
         }
