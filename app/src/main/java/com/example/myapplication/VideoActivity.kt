@@ -1,9 +1,11 @@
 package com.example.myapplication
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
+import android.webkit.MimeTypeMap
 import android.widget.FrameLayout
 import android.widget.MediaController
 import android.widget.Toast
@@ -32,7 +34,7 @@ class VideoActivity : AppCompatActivity() {
             insets
         }
 
-        binding.videoView.isVisible=false
+        binding.videoView.isVisible = false
         binding.select.setOnClickListener {
             val intent = Intent()
             intent.action = Intent.ACTION_PICK
@@ -43,20 +45,45 @@ class VideoActivity : AppCompatActivity() {
 
 
     }
-    val videoLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        if (it.resultCode == RESULT_OK) {
-            if (it.data != null) {
-               binding.select.isVisible=false
-                binding.videoView.isVisible=true
-                val mc = MediaController(this)
-//                binding.videoView.setMediaController(mc)
-                mc.setAnchorView(binding.videoView)
 
-                binding.videoView.setVideoURI(it.data!!.data)
-                binding.videoView.setMediaController(mc)
-                binding.videoView.start()
+    val videoLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if (it.resultCode == RESULT_OK) {
+                if (it.data != null) {
+
+                    val ref = Firebase.storage.reference.child(
+                        "Video/" + System.currentTimeMillis() + "." + getFileType(it.data!!.data!!)
+                    )
+                    ref.putFile(it.data!!.data!!)
+                        .addOnSuccessListener {
+                            ref.downloadUrl.addOnSuccessListener {
+                                Firebase.database.reference.child("Video").push()
+                                    .setValue(it.toString())
+//                            binding.imageView.setImageURI(it)    // if i want to show image in imageview we can use this code
+                                Toast.makeText(this, "Video Uploaded", Toast.LENGTH_SHORT).show()
+                                binding.select.isVisible = false
+                                binding.videoView.isVisible = true
+                                val mc = MediaController(this)
+//                               binding.videoView.setMediaController(mc)
+                                mc.setAnchorView(binding.videoView)
+
+                                binding.videoView.setVideoURI(it)
+                                binding.videoView.setMediaController(mc)
+                                binding.videoView.start()
+
+                            }
+                        }
+
+
+                }
+
             }
-
         }
+
+    private fun getFileType(data: Uri): String? {
+        val mimeType = MimeTypeMap.getSingleton()
+        return mimeType.getExtensionFromMimeType(contentResolver.getType(data))
+
+
     }
 }
